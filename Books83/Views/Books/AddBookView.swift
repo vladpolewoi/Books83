@@ -15,58 +15,38 @@ struct AddBookView: View {
     @StateObject private var searchService = BookSearchService()
     
     @State private var titleText = ""
+    @State private var authorText = ""
+    @State private var pagesText = ""
     @State private var searchResults: [BookInfo] = []
     @State private var selectedBook: BookInfo?
     @State private var isSearching = false
     @State private var searchError: String?
     @State private var searchTask: Task<Void, Never>?
-    
-    // Manual entry fields (shown when no book is selected or for editing)
-    @State private var manualAuthor = ""
-    @State private var manualPages = ""
-    @State private var showingManualEntry = false
+    @FocusState private var titleFocused: Bool
     
     private var canSave: Bool {
-        if let book = selectedBook {
-            return !book.title.isEmpty && !book.primaryAuthor.isEmpty && book.pageCount > 0
-        } else {
-            return !titleText.isEmpty && !manualAuthor.isEmpty && !manualPages.isEmpty && (Int(manualPages) ?? 0) > 0
-        }
+        !titleText.isEmpty && !authorText.isEmpty && !pagesText.isEmpty && (Int(pagesText) ?? 0) > 0
     }
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Search Section
-                    searchSection
-                    
-                    // Search Results or Selected Book
-                    if isSearching {
-                        searchingIndicator
-                    } else if let error = searchError {
-                        errorView(error)
-                    } else if let selected = selectedBook {
-                        selectedBookView(selected)
-                    } else if !searchResults.isEmpty {
-                        searchResultsList
-                    } else if !titleText.isEmpty && searchResults.isEmpty && !isSearching {
-                        noResultsView
+            VStack(spacing: 0) {
+                // Form Section
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Book Form
+                        bookFormSection
+                        
+                        // Search Results (when typing in title)
+                        if !titleText.isEmpty && selectedBook == nil {
+                            searchResultsSection
+                        }
                     }
-                    
-                    // Manual Entry Toggle
-                    if selectedBook == nil {
-                        manualEntryToggle
-                    }
-                    
-                    // Manual Entry Form
-                    if showingManualEntry && selectedBook == nil {
-                        manualEntryForm
-                    }
-                    
-                    Spacer(minLength: 100)
+                    .padding()
                 }
-                .padding()
+                
+                // Save Button at bottom
+                saveButtonSection
             }
             .navigationTitle("Add Book")
             .navigationBarTitleDisplayMode(.large)
@@ -75,24 +55,22 @@ struct AddBookView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        saveBook()
-                    }
-                    .fontWeight(.semibold)
-                    .disabled(!canSave)
+                    .foregroundStyle(.secondary)
                 }
             }
         }
         .onChange(of: titleText) { _, newValue in
             searchTask?.cancel()
-            searchTask = Task {
-                try? await Task.sleep(for: .milliseconds(500))
-                if !Task.isCancelled {
-                    await performSearch(newValue)
+            if !newValue.isEmpty && selectedBook == nil {
+                searchTask = Task {
+                    try? await Task.sleep(for: .milliseconds(500))
+                    if !Task.isCancelled {
+                        await performSearch(newValue)
+                    }
                 }
+            } else {
+                searchResults = []
+                isSearching = false
             }
         }
         .onDisappear {
@@ -102,160 +80,252 @@ struct AddBookView: View {
     
     // MARK: - View Components
     
-    private var searchSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(selectedBook != nil ? "Selected Book" : "Search for a book or enter title")
-                .font(.headline)
-                .foregroundStyle(.primary)
-            
+    private var bookFormSection: some View {
+        VStack(spacing: 20) {
+            // Header
             HStack {
-                Image(systemName: selectedBook != nil ? "checkmark.circle.fill" : "magnifyingglass")
-                    .foregroundStyle(selectedBook != nil ? .green : .secondary)
-                
-                TextField("Enter book title", text: $titleText)
-                    .textFieldStyle(.roundedBorder)
-                    .submitLabel(.search)
-                    .disabled(selectedBook != nil)
-                
-                if !titleText.isEmpty {
-                    Button("Clear") {
-                        clearSearch()
-                    }
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Book Details")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    Text(selectedBook != nil ? "Selected from search" : "Type title to search or add manually")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-            }
-        }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-    
-    private var searchingIndicator: some View {
-        HStack {
-            ProgressView()
-                .scaleEffect(0.8)
-            Text("Searching...")
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-    
-    private func errorView(_ error: String) -> some View {
-        HStack {
-            Image(systemName: "exclamationmark.triangle")
-                .foregroundStyle(.orange)
-            Text(error)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-    
-    private var noResultsView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "book.closed")
-                .font(.largeTitle)
-                .foregroundStyle(.secondary)
-            
-            Text("No books found")
-                .font(.headline)
-            
-            Text("Try a different search term or add the book manually")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-    
-    private func selectedBookView(_ book: BookInfo) -> some View {
-        VStack(spacing: 16) {
-            HStack {
-                Text("Selected Book")
-                    .font(.headline)
-                    .foregroundStyle(.green)
                 
                 Spacer()
                 
-                Button("Change") {
-                    selectedBook = nil
-                    titleText = ""
+                if selectedBook != nil {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .font(.title2)
                 }
-                .foregroundStyle(.blue)
             }
             
-            BookSearchResultRow(book: book, isSelected: true) {
-                // Already selected
+            // Book Preview Card (when book is selected)
+            if let book = selectedBook {
+                selectedBookCard(book)
+            }
+            
+            // Form Fields
+            VStack(spacing: 16) {
+                // Title Field with Search
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label("Title", systemImage: "book.closed")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        
+                        Spacer()
+                        
+                        if selectedBook != nil {
+                            Button("Change Book") {
+                                clearSelection()
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.blue)
+                        }
+                    }
+                    
+                    HStack {
+                        TextField("Enter book title", text: $titleText)
+                            .textFieldStyle(.plain)
+                            .focused($titleFocused)
+                            .disabled(selectedBook != nil)
+                        
+                        if isSearching {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                        } else if !titleText.isEmpty && selectedBook == nil {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(.regularMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(selectedBook != nil ? .green : .clear, lineWidth: 1)
+                    )
+                }
+                
+                // Author Field
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Author", systemImage: "person")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    TextField("Enter author name", text: $authorText)
+                        .textFieldStyle(.plain)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(.regularMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                
+                // Pages Field
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Total Pages", systemImage: "book.pages")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    TextField("Enter page count", text: $pagesText)
+                        .textFieldStyle(.plain)
+                        .keyboardType(.numberPad)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(.regularMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
             }
         }
         .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+    
+    private func selectedBookCard(_ book: BookInfo) -> some View {
+        HStack(spacing: 12) {
+            // Book cover
+            AsyncImage(url: URL(string: book.imageURL ?? "")) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.quaternary)
+                    .overlay(
+                        Image(systemName: "book.closed")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    )
+            }
+            .frame(width: 50, height: 65)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .shadow(radius: 2)
+            
+            // Book info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(book.title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .lineLimit(2)
+                
+                Text(book.authorsText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                
+                if book.pageCount > 0 {
+                    Text("\(book.pageCount) pages")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            
+            Spacer()
+            
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        }
+        .padding()
+        .background(.green.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(.green, lineWidth: 2)
+                .stroke(.green.opacity(0.3), lineWidth: 1)
         )
     }
     
-    private var searchResultsList: some View {
+    private var searchResultsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Search Results")
-                .font(.headline)
-                .padding(.horizontal)
-            
-            LazyVStack(spacing: 12) {
-                ForEach(searchResults) { book in
-                    BookSearchResultRow(book: book, isSelected: false) {
-                        selectedBook = book
-                        titleText = book.title
-                        showingManualEntry = false
+            if isSearching {
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Searching books...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(.regularMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            } else if let error = searchError {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text("Search error: \(error)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(.regularMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            } else if searchResults.isEmpty && !titleText.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "book.closed")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    
+                    Text("No books found")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    Text("Continue adding the book manually")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(.regularMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            } else if !searchResults.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Found \(searchResults.count) books")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                    
+                    LazyVStack(spacing: 8) {
+                        ForEach(searchResults) { book in
+                            BookSearchResultRow(book: book, isSelected: false) {
+                                selectBook(book)
+                            }
+                        }
                     }
                 }
+                .padding()
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
         }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
-    private var manualEntryToggle: some View {
-        Button {
-            showingManualEntry.toggle()
-        } label: {
+    private var saveButtonSection: some View {
+        VStack(spacing: 0) {
+            Divider()
+            
             HStack {
-                Image(systemName: showingManualEntry ? "chevron.down" : "chevron.right")
-                Text("Add book manually")
-                Spacer()
+                Button("Save Book") {
+                    saveBook()
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(canSave ? .blue : .gray.opacity(0.3))
+                .foregroundStyle(canSave ? .white : .secondary)
+                .fontWeight(.semibold)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .disabled(!canSave)
             }
             .padding()
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .background(.ultraThinMaterial)
         }
-        .foregroundStyle(.primary)
-    }
-    
-    private var manualEntryForm: some View {
-        VStack(spacing: 16) {
-            // Title is already entered in the search field above
-            
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Author")
-                    .font(.headline)
-                TextField("Enter author name", text: $manualAuthor)
-                    .textFieldStyle(.roundedBorder)
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Total Pages")
-                    .font(.headline)
-                TextField("Enter page count", text: $manualPages)
-                    .textFieldStyle(.roundedBorder)
-                    .keyboardType(.numberPad)
-            }
-        }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
     // MARK: - Methods
@@ -296,35 +366,33 @@ struct AddBookView: View {
         }
     }
     
-    private func clearSearch() {
-        searchTask?.cancel()
-        titleText = ""
+    private func selectBook(_ book: BookInfo) {
+        selectedBook = book
+        titleText = book.title
+        authorText = book.primaryAuthor
+        pagesText = book.pageCount > 0 ? String(book.pageCount) : ""
         searchResults = []
+        titleFocused = false
+    }
+    
+    private func clearSelection() {
         selectedBook = nil
-        searchError = nil
-        isSearching = false
+        titleText = ""
+        authorText = ""
+        pagesText = ""
+        searchResults = []
+        titleFocused = true
     }
     
     private func saveBook() {
-        let book: Book
+        guard let pageCount = Int(pagesText) else { return }
         
-        if let selectedBook = selectedBook {
-            // Create book from API result
-            book = Book(
-                title: selectedBook.title,
-                author: selectedBook.primaryAuthor,
-                totalPages: selectedBook.pageCount,
-                imageName: selectedBook.imageURL
-            )
-        } else {
-            // Create book from manual entry using titleText
-            guard let pageCount = Int(manualPages) else { return }
-            book = Book(
-                title: titleText,
-                author: manualAuthor,
-                totalPages: pageCount
-            )
-        }
+        let book = Book(
+            title: titleText,
+            author: authorText,
+            totalPages: pageCount,
+            imageName: selectedBook?.imageURL
+        )
         
         modelContext.insert(book)
         dismiss()

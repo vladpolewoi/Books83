@@ -24,7 +24,7 @@ struct GoogleBookItem: Codable {
             title: volumeInfo.title ?? "Unknown Title",
             authors: volumeInfo.authors ?? ["Unknown Author"],
             pageCount: volumeInfo.pageCount ?? 0,
-            imageURL: volumeInfo.imageLinks?.thumbnail,
+            imageURL: volumeInfo.imageLinks?.thumbnail?.replacingOccurrences(of: "http:", with: "https:"),
             description: volumeInfo.description,
             publishedDate: volumeInfo.publishedDate,
             categories: volumeInfo.categories
