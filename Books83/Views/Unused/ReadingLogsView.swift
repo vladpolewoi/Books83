@@ -26,9 +26,9 @@ struct ReadingLogsView: View {
                         // Stats section
                         Section {
                             HStack(spacing: 20) {
-                                StatCard(title: "Total Pages", value: "\(totalPages)")
-                                StatCard(title: "Sessions", value: "\(logs.count)")
-                                StatCard(title: "Avg Pages", value: "\(averagePages)")
+                                SimpleStatCard(title: "Total Pages", value: "\(totalPages)")
+                                SimpleStatCard(title: "Sessions", value: "\(logs.count)")
+                                SimpleStatCard(title: "Avg Pages", value: "\(averagePages)")
                             }
                             .listRowBackground(Color.clear)
                             .listRowInsets(EdgeInsets())
@@ -72,7 +72,7 @@ struct ReadingLogsView: View {
     }
 }
 
-struct StatCard: View {
+struct SimpleStatCard: View {
     let title: String
     let value: String
     

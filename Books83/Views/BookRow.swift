@@ -61,7 +61,7 @@ struct BookRow: View {
         }
         .padding(.vertical, 4)
         .sheet(isPresented: $showingQuickLog) {
-            QuickLogView(book: book)
+            QuickLogView()
         }
     }
 }

@@ -11,16 +11,16 @@ import SwiftData
 struct MainTabView: View {
     var body: some View {
         TabView {
+            DashboardView()
+                .tabItem {
+                    Image(systemName: "chart.bar.fill")
+                    Text("Dashboard")
+                }
+            
             BookListView()
                 .tabItem {
                     Image(systemName: "books.vertical")
                     Text("Books")
-                }
-            
-            ReadingLogsView()
-                .tabItem {
-                    Image(systemName: "book.pages")
-                    Text("Reading Logs")
                 }
         }
     }

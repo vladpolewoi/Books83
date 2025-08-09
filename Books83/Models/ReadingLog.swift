@@ -55,9 +55,10 @@ extension ReadingLog {
     static var mockLogs: [ReadingLog] {
         let mockBooks = Book.mockBooks
         return [
-            ReadingLog(book: mockBooks[0], pagesRead: 25, readingTimeMinutes: 45),
-            ReadingLog(book: mockBooks[1], pagesRead: 18, readingTimeMinutes: 30),
-            ReadingLog(book: mockBooks[2], pagesRead: 32, readingTimeMinutes: nil),
+            ReadingLog(book: mockBooks[0], pagesRead: 25, readingTimeMinutes: 45, notes: "A bit slow to start, but getting interesting."),
+            ReadingLog(book: mockBooks[4], pagesRead: 18, readingTimeMinutes: 30, notes: "Holden is a fascinating character."),
+            ReadingLog(book: mockBooks[0], pagesRead: 32, readingTimeMinutes: 50, notes: "The trial is getting intense!"),
+            ReadingLog(book: mockBooks[5], pagesRead: 45, readingTimeMinutes: 60, notes: "Finished the book, the ending was thought-provoking.")
         ]
     }
 }

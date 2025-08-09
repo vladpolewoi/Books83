@@ -9,10 +9,10 @@ import SwiftUI
 import SwiftData
 
 struct QuickLogView: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Query private var books: [Book]
     
-    let book: Book
+    @State private var selectedBook: Book?
     
     @State private var pagesRead: String = ""
     @State private var readingTimeMinutes: String = ""
@@ -25,38 +25,55 @@ struct QuickLogView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                // Book info
-                HStack(spacing: 12) {
-                    AsyncImage(url: URL(string: book.imageName ?? "")) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    } placeholder: {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.gray.opacity(0.3))
-                            .overlay(
-                                Image(systemName: "book")
-                                    .foregroundColor(.gray)
-                            )
-                    }
-                    .frame(width: 50, height: 70)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                // Book selection
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Select Book")
+                        .font(.headline)
                     
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(book.title)
-                            .font(.headline)
-                            .lineLimit(2)
-                        
-                        Text("by \(book.author)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                    Picker("Book", selection: $selectedBook) {
+                        Text("Choose a book...").tag(Book?.none)
+                        ForEach(books, id: \.id) { book in
+                            Text(book.title).tag(book as Book?)
+                        }
                     }
-                    
-                    Spacer()
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                
+                // Book info (when selected)
+                if let book = selectedBook {
+                    HStack(spacing: 12) {
+                        AsyncImage(url: URL(string: book.imageName ?? "")) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                        } placeholder: {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.gray.opacity(0.3))
+                                .overlay(
+                                    Image(systemName: "book")
+                                        .foregroundColor(.gray)
+                                )
+                        }
+                        .frame(width: 50, height: 70)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(book.title)
+                                .font(.headline)
+                                .lineLimit(2)
+                            
+                            Text("by \(book.author)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
                 
                 // Pages input
                 VStack(alignment: .leading, spacing: 8) {
@@ -156,18 +173,12 @@ struct QuickLogView: View {
             .padding()
             .navigationTitle("Quick Log")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
         }
         .animation(.easeInOut, value: includeTime)
     }
     
     private var canLog: Bool {
+        guard selectedBook != nil else { return false }
         guard let pages = Int(pagesRead), pages > 0 else { return false }
         if includeTime {
             return Int(readingTimeMinutes) != nil && !readingTimeMinutes.isEmpty
@@ -190,17 +201,22 @@ struct QuickLogView: View {
     }
     
     private func logReading() {
+        guard let book = selectedBook else { return }
         guard let pages = Int(pagesRead), pages > 0 else { return }
         
         let timeMinutes: Int? = includeTime ? Int(readingTimeMinutes) : nil
         let log = ReadingLog(book: book, pagesRead: pages, readingTimeMinutes: timeMinutes)
         
         modelContext.insert(log)
-        dismiss()
+        
+        // Reset form after successful log
+        pagesRead = ""
+        readingTimeMinutes = ""
+        includeTime = false
     }
 }
 
 #Preview {
-    QuickLogView(book: Book.sampleBook)
+    QuickLogView()
         .modelContainer(mockContainer())
 }
