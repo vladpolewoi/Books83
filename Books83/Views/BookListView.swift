@@ -26,13 +26,24 @@ struct BookListView: View {
                 } else {
                     List {
                         ForEach(books) { book in
-                            BookRow(book: book)
+                            Button {
+                                selectedBook = book
+                                showingQuickLog = true
+                            } label: {
+                                BookRow(book: book, showPlusButton: false)
+                            }
+                            .buttonStyle(.plain)
                         }
                         .onDelete(perform: deleteBooks)
                     }
                 }
             }
             .navigationTitle("My Books")
+            .sheet(isPresented: $showingQuickLog) {
+                if let book = selectedBook {
+                    QuickLogSheet(preSelectedBook: book)
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {

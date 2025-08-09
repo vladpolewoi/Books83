@@ -58,6 +58,7 @@ struct DashboardView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
+                        selectedBookForLog = lastLoggedBook
                         showingQuickLog = true
                     } label: {
                         Image(systemName: "plus")
@@ -67,7 +68,7 @@ struct DashboardView: View {
             }
         }
         .sheet(isPresented: $showingQuickLog) {
-            QuickLogSheet()
+            QuickLogSheet(preSelectedBook: selectedBookForLog)
         }
     }
     
@@ -129,6 +130,10 @@ struct DashboardView: View {
         let uniqueBookIds = Set(readingLogs.sorted { $0.logDate > $1.logDate }
             .prefix(10).map { $0.book.id })
         return books.filter { uniqueBookIds.contains($0.id) }
+    }
+    
+    private var lastLoggedBook: Book? {
+        readingLogs.sorted { $0.logDate > $1.logDate }.first?.book
     }
 }
 

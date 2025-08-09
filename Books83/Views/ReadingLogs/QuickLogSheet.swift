@@ -4,6 +4,8 @@ import SwiftData
 struct QuickLogSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    
+    let preSelectedBook: Book?
 
     @State private var selectedBook: Book?
     @Query private var books: [Book]
@@ -82,6 +84,11 @@ struct QuickLogSheet: View {
         .sheet(isPresented: $showingBookPicker) {
             ModernBookPicker(selectedBook: $selectedBook)
         }
+        .onAppear {
+            if selectedBook == nil {
+                selectedBook = preSelectedBook
+            }
+        }
     }
     
     private func saveReading() {
@@ -102,6 +109,6 @@ struct QuickLogSheet: View {
 }
 
 #Preview {
-    QuickLogSheet()
+    QuickLogSheet(preSelectedBook: nil)
         .modelContainer(mockContainer())
 }
