@@ -90,10 +90,6 @@ struct TitleInputCard: View {
                     selectedBookPreview(book)
                 }
                 
-                // Search Results
-                if !searchResults.isEmpty && selectedBook == nil {
-                    searchResultsView
-                }
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 24)
@@ -148,70 +144,6 @@ struct TitleInputCard: View {
         )
     }
     
-    private var searchResultsView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Found \(searchResults.count) books")
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 4)
-            
-            LazyVStack(spacing: 6) {
-                ForEach(searchResults.prefix(3)) { book in
-                    searchResultRow(book)
-                }
-            }
-        }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-    
-    private func searchResultRow(_ book: BookInfo) -> some View {
-        Button {
-            onBookSelected(book)
-        } label: {
-            HStack(spacing: 10) {
-                AsyncImage(url: URL(string: book.imageURL ?? "")) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(.quaternary)
-                        .overlay(
-                            Image(systemName: "book.closed")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        )
-                }
-                .frame(width: 24, height: 32)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-                
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(book.title)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .lineLimit(1)
-                    
-                    Text(book.authorsText)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "plus.circle")
-                    .font(.caption)
-                    .foregroundStyle(.blue)
-            }
-            .padding(.vertical, 6)
-            .padding(.horizontal, 8)
-            .background(.clear)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
     
 }
 

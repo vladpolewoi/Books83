@@ -58,6 +58,15 @@ struct AddBookView: View {
                         BookPagesInputCard(pagesText: $pagesText)
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
                         
+                        // Search Results Card (separate from title card)
+                        if !searchResults.isEmpty && selectedBook == nil {
+                            SearchResultsCard(
+                                searchResults: searchResults,
+                                onBookSelected: selectBook
+                            )
+                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
+                        }
+                        
                         // Search Error State
                         if let error = searchError {
                             errorCard(error)
