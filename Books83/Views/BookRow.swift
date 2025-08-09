@@ -9,7 +9,13 @@ import SwiftUI
 
 struct BookRow: View {
     let book: Book
+    let showPlusButton: Bool
     @State private var showingQuickLog = false
+    
+    init(book: Book, showPlusButton: Bool = true) {
+        self.book = book
+        self.showPlusButton = showPlusButton
+    }
     
     var body: some View {
         HStack(spacing: 12) {
@@ -50,18 +56,22 @@ struct BookRow: View {
             Spacer()
             
             // Quick log button
-            Button {
-                showingQuickLog = true
-            } label: {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(.blue)
+            if showPlusButton {
+                Button {
+                    showingQuickLog = true
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .padding(.vertical, 4)
         .sheet(isPresented: $showingQuickLog) {
-            QuickLogView()
+            if showPlusButton {
+                QuickLogSheet(preSelectedBook: book)
+            }
         }
     }
 }
