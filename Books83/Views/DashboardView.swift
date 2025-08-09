@@ -40,14 +40,9 @@ struct DashboardView: View {
                             )
                             .frame(height: 200)
                         } else {
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible())
-                            ], spacing: 16) {
-                                ForEach(recentBooks.prefix(4), id: \.id) { book in
-                                    BookMockup(book: book) {
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                                ForEach(recentBooks.prefix(3), id: \.id) { book in
+                                    RecentBookCard(book: book) {
                                         selectedBookForLog = book
                                         showingQuickLog = true
                                     }
@@ -205,47 +200,42 @@ struct ModernStatCard: View {
     }
 }
 
-struct BookMockup: View {
+struct RecentBookCard: View {
     let book: Book
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {
-                // Book cover image
-                AsyncImage(url: URL(string: book.imageName ?? "")) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 70, height: 100)
-                        .clipped()
-                        .cornerRadius(8)
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(width: 70, height: 100)
-                        .overlay(
-                            Image(systemName: "book")
-                                .font(.title2)
-                                .foregroundColor(.gray)
-                        )
+                ZStack {
+                    // Book-like shadow
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.black.opacity(0.2))
+                        .frame(width: 80, height: 120)
+                        .offset(x: 3, y: 3)
+                        .blur(radius: 2.5)
+
+                    // Book Cover Image
+                    AsyncImage(url: URL(string: book.imageName ?? "")) { image in
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Color.gray.opacity(0.1)
+                            .overlay(Image(systemName: "book.closed").font(.largeTitle).foregroundColor(.gray))
+                    }
+                    .frame(width: 80, height: 120)
+                    .clipped()
+                    .cornerRadius(4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4).stroke(Color.black.opacity(0.1), lineWidth: 1)
+                    )
                 }
-                
-                // Title and author
-                VStack(spacing: 2) {
-                    Text(book.title)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.primary)
-                    
-                    Text(book.author)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
-                .frame(width: 70)
+
+                Text(book.title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 80)
             }
         }
         .buttonStyle(.plain)
