@@ -12,6 +12,7 @@ struct BookListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var books: [Book]
     @State private var showingQuickLog = false
+    @State private var showingAddBook = false
     @State private var selectedBook: Book?
     
     var body: some View {
@@ -44,10 +45,13 @@ struct BookListView: View {
                     QuickLogSheet(preSelectedBook: book)
                 }
             }
+            .sheet(isPresented: $showingAddBook) {
+                AddBookView()
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        addSampleBook()
+                        showingAddBook = true
                     } label: {
                         Image(systemName: "plus")
                     }
