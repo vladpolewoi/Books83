@@ -50,15 +50,7 @@ struct AddBookView: View {
                         )
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
                         
-                        // Author Input Card
-                        AuthorInputCard(authorText: $authorText)
-                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
-                        
-                        // Pages Input Card
-                        BookPagesInputCard(pagesText: $pagesText)
-                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
-                        
-                        // Search Results Card (separate from title card)
+                        // Search Results Card (directly under title input)
                         if !searchResults.isEmpty && selectedBook == nil {
                             SearchResultsCard(
                                 searchResults: searchResults,
@@ -66,6 +58,14 @@ struct AddBookView: View {
                             )
                             .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
                         }
+                        
+                        // Author Input Card
+                        AuthorInputCard(authorText: $authorText)
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
+                        
+                        // Pages Input Card
+                        BookPagesInputCard(pagesText: $pagesText)
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
                         
                         // Search Error State
                         if let error = searchError {
