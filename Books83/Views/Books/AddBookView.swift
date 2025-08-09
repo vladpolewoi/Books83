@@ -14,14 +14,14 @@ struct AddBookView: View {
     
     @StateObject private var searchService = BookSearchService()
     
-    @State private var searchText = ""
+    @State private var titleText = ""
     @State private var searchResults: [BookInfo] = []
     @State private var selectedBook: BookInfo?
     @State private var isSearching = false
     @State private var searchError: String?
+    @State private var searchTask: Task<Void, Never>?
     
     // Manual entry fields (shown when no book is selected or for editing)
-    @State private var manualTitle = ""
     @State private var manualAuthor = ""
     @State private var manualPages = ""
     @State private var showingManualEntry = false
@@ -30,7 +30,7 @@ struct AddBookView: View {
         if let book = selectedBook {
             return !book.title.isEmpty && !book.primaryAuthor.isEmpty && book.pageCount > 0
         } else {
-            return !manualTitle.isEmpty && !manualAuthor.isEmpty && !manualPages.isEmpty && (Int(manualPages) ?? 0) > 0
+            return !titleText.isEmpty && !manualAuthor.isEmpty && !manualPages.isEmpty && (Int(manualPages) ?? 0) > 0
         }
     }
     
@@ -50,7 +50,7 @@ struct AddBookView: View {
                         selectedBookView(selected)
                     } else if !searchResults.isEmpty {
                         searchResultsList
-                    } else if !searchText.isEmpty {
+                    } else if !titleText.isEmpty && searchResults.isEmpty && !isSearching {
                         noResultsView
                     }
                     
@@ -86,8 +86,17 @@ struct AddBookView: View {
                 }
             }
         }
-        .task(id: searchText) {
-            await performSearch()
+        .onChange(of: titleText) { _, newValue in
+            searchTask?.cancel()
+            searchTask = Task {
+                try? await Task.sleep(for: .milliseconds(500))
+                if !Task.isCancelled {
+                    await performSearch(newValue)
+                }
+            }
+        }
+        .onDisappear {
+            searchTask?.cancel()
         }
     }
     
@@ -95,29 +104,22 @@ struct AddBookView: View {
     
     private var searchSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Search for a book")
+            Text(selectedBook != nil ? "Selected Book" : "Search for a book or enter title")
                 .font(.headline)
                 .foregroundStyle(.primary)
             
             HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
+                Image(systemName: selectedBook != nil ? "checkmark.circle.fill" : "magnifyingglass")
+                    .foregroundStyle(selectedBook != nil ? .green : .secondary)
                 
-                TextField("Enter book title, author, or ISBN", text: $searchText)
+                TextField("Enter book title", text: $titleText)
                     .textFieldStyle(.roundedBorder)
                     .submitLabel(.search)
-                    .onSubmit {
-                        Task {
-                            await performSearch()
-                        }
-                    }
+                    .disabled(selectedBook != nil)
                 
-                if !searchText.isEmpty {
+                if !titleText.isEmpty {
                     Button("Clear") {
-                        searchText = ""
-                        searchResults = []
-                        selectedBook = nil
-                        searchError = nil
+                        clearSearch()
                     }
                     .foregroundStyle(.secondary)
                 }
@@ -181,6 +183,7 @@ struct AddBookView: View {
                 
                 Button("Change") {
                     selectedBook = nil
+                    titleText = ""
                 }
                 .foregroundStyle(.blue)
             }
@@ -207,6 +210,7 @@ struct AddBookView: View {
                 ForEach(searchResults) { book in
                     BookSearchResultRow(book: book, isSelected: false) {
                         selectedBook = book
+                        titleText = book.title
                         showingManualEntry = false
                     }
                 }
@@ -233,12 +237,7 @@ struct AddBookView: View {
     
     private var manualEntryForm: some View {
         VStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Title")
-                    .font(.headline)
-                TextField("Enter book title", text: $manualTitle)
-                    .textFieldStyle(.roundedBorder)
-            }
+            // Title is already entered in the search field above
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("Author")
@@ -261,31 +260,49 @@ struct AddBookView: View {
     
     // MARK: - Methods
     
-    private func performSearch() async {
-        guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            searchResults = []
-            return
-        }
-        
-        isSearching = true
-        searchError = nil
-        
-        do {
-            // Add a small delay to avoid too many requests
-            try await Task.sleep(for: .milliseconds(300))
-            let results = try await searchService.searchBooks(query: searchText)
-            
+    private func performSearch(_ query: String) async {
+        guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             await MainActor.run {
-                searchResults = results
-                isSearching = false
-            }
-        } catch {
-            await MainActor.run {
-                searchError = error.localizedDescription
                 searchResults = []
                 isSearching = false
             }
+            return
         }
+        
+        await MainActor.run {
+            isSearching = true
+            searchError = nil
+        }
+        
+        do {
+            let results = try await searchService.searchBooks(query: query)
+            
+            if !Task.isCancelled {
+                await MainActor.run {
+                    searchResults = results
+                    isSearching = false
+                }
+            }
+        } catch is CancellationError {
+            // Task was cancelled, do nothing
+        } catch {
+            if !Task.isCancelled {
+                await MainActor.run {
+                    searchError = error.localizedDescription
+                    searchResults = []
+                    isSearching = false
+                }
+            }
+        }
+    }
+    
+    private func clearSearch() {
+        searchTask?.cancel()
+        titleText = ""
+        searchResults = []
+        selectedBook = nil
+        searchError = nil
+        isSearching = false
     }
     
     private func saveBook() {
@@ -300,10 +317,10 @@ struct AddBookView: View {
                 imageName: selectedBook.imageURL
             )
         } else {
-            // Create book from manual entry
+            // Create book from manual entry using titleText
             guard let pageCount = Int(manualPages) else { return }
             book = Book(
-                title: manualTitle,
+                title: titleText,
                 author: manualAuthor,
                 totalPages: pageCount
             )
