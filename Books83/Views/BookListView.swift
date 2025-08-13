@@ -11,9 +11,7 @@ import SwiftData
 struct BookListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var books: [Book]
-    @State private var showingQuickLog = false
     @State private var showingAddBook = false
-    @State private var selectedBook: Book?
     
     var body: some View {
         NavigationView {
@@ -27,24 +25,17 @@ struct BookListView: View {
                 } else {
                     List {
                         ForEach(books) { book in
-                            Button {
-                                selectedBook = book
-                                showingQuickLog = true
+                            NavigationLink {
+                                BookDetailView(book: book)
                             } label: {
                                 BookRow(book: book, showPlusButton: false)
                             }
-                            .buttonStyle(.plain)
                         }
                         .onDelete(perform: deleteBooks)
                     }
                 }
             }
             .navigationTitle("My Books")
-            .sheet(isPresented: $showingQuickLog) {
-                if let book = selectedBook {
-                    QuickLogSheet(preSelectedBook: book)
-                }
-            }
             .sheet(isPresented: $showingAddBook) {
                 AddBookView()
             }
