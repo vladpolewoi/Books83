@@ -13,6 +13,9 @@ struct Books83App: App {
     var body: some Scene {
         WindowGroup {
             MainTabView()
+                .preferredColorScheme(.dark)
+                .background(Color.appBackground)
+                .tint(Color.accent)
         }
         .modelContainer(for: modelRegistry)
     }

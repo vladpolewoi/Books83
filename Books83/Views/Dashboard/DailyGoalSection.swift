@@ -14,16 +14,17 @@ struct DailyGoalSection: View {
                 Text("Daily Goal")
                     .font(.title2)
                     .fontWeight(.semibold)
+                    .foregroundColor(.primaryText)
                 
                 Spacer()
                 
                 Text("\(currentPages) / \(goalPages) pages")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.secondaryText)
             }
             
             ProgressView(value: progress)
-                .tint(.blue)
+                .tint(.accent)
                 .scaleEffect(y: 2.0)
         }
     }
@@ -32,4 +33,5 @@ struct DailyGoalSection: View {
 #Preview {
     DailyGoalSection(currentPages: 75, goalPages: 100)
         .padding()
+        .background(Color.appBackground)
 }

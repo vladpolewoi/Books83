@@ -95,7 +95,15 @@ struct QuickLogSheet: View {
         guard let book = selectedBook,
               let pages = Int(pagesRead), pages > 0 else { return }
         
-        let timeToLog = trackTime ? Int(readingMinutes) : nil
+        // Calculate reading time: use tracked time or estimate 2 minutes per page
+        let timeToLog: Int?
+        if trackTime {
+            timeToLog = Int(readingMinutes)
+        } else {
+            // Default: 2 minutes per page
+            timeToLog = pages * 2
+        }
+        
         let log = ReadingLog(
             book: book,
             pagesRead: pages,
@@ -103,7 +111,37 @@ struct QuickLogSheet: View {
             notes: notes.isEmpty ? nil : notes
         )
         
+        // Update book progress and status
+        let oldCurrentPage = book.currentPage
+        let newCurrentPage = min(book.currentPage + pages, book.totalPages)
+        book.currentPage = newCurrentPage
+        
+        print("DEBUG: Updating book '\(book.title)'")
+        print("DEBUG: Old current page: \(oldCurrentPage)")
+        print("DEBUG: Pages read: \(pages)")
+        print("DEBUG: New current page: \(newCurrentPage)")
+        print("DEBUG: Total pages: \(book.totalPages)")
+        
+        // Update status based on progress
+        let oldStatus = book.status
+        if newCurrentPage >= book.totalPages {
+            book.status = .completed
+        } else if book.status == .toRead {
+            book.status = .reading
+        }
+        
+        print("DEBUG: Old status: \(oldStatus)")
+        print("DEBUG: New status: \(book.status)")
+        
         modelContext.insert(log)
+        
+        // Save changes to ensure persistence
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to save context: \(error)")
+        }
+        
         dismiss()
     }
 }

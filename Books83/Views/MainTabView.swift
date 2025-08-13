@@ -9,6 +9,8 @@ import SwiftUI
 import SwiftData
 
 struct MainTabView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
+    
     var body: some View {
         TabView {
             DashboardView()
@@ -22,7 +24,17 @@ struct MainTabView: View {
                     Image(systemName: "books.vertical")
                     Text("Books")
                 }
+            
+            SettingsView()
+                .tabItem {
+                    Image(systemName: "gearshape.fill")
+                    Text("Settings")
+                }
         }
+        .background(Color.appBackground)
+        .toolbarBackground(Color.cardBackground, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
+        .tint(Color.accent)
     }
 }
 

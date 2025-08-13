@@ -11,6 +11,7 @@ import SwiftData
 struct AddBookView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var themeManager = ThemeManager.shared
     
     @StateObject private var searchService = BookSearchService()
     
@@ -30,12 +31,8 @@ struct AddBookView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                LinearGradient(
-                    colors: [Color(.systemBackground), Color(.systemGray6).opacity(0.3)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                Color.appBackground
+                    .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 16) {
@@ -91,7 +88,7 @@ struct AddBookView: View {
                         dismiss()
                     }
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundColor(.secondaryText)
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -127,15 +124,16 @@ struct AddBookView: View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.title2)
-                .foregroundStyle(.orange)
+                .foregroundColor(.warning)
             
             Text("Search Error")
                 .font(.headline)
                 .fontWeight(.bold)
+                .foregroundColor(.primaryText)
             
             Text(error)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundColor(.secondaryText)
                 .multilineTextAlignment(.center)
             
             Button("Try Again") {
@@ -147,15 +145,15 @@ struct AddBookView: View {
                 }
             }
             .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(.orange)
+            .foregroundColor(.warning)
             .padding(.horizontal, 20)
             .padding(.vertical, 8)
-            .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
+            .background(Color.warning.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
         }
         .padding(.vertical, 24)
         .padding(.horizontal, 20)
         .frame(maxWidth: .infinity)
-        .background(.ultraThickMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 20))
         .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
     }
     
@@ -163,22 +161,23 @@ struct AddBookView: View {
         VStack(spacing: 16) {
             Image(systemName: "book.closed")
                 .font(.title)
-                .foregroundStyle(.secondary)
+                .foregroundColor(.secondaryText)
             
             Text("No books found")
                 .font(.headline)
                 .fontWeight(.bold)
+                .foregroundColor(.primaryText)
             
             Text("Continue adding \"\(titleText)\" manually by filling in the details below")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundColor(.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 8)
         }
         .padding(.vertical, 24)
         .padding(.horizontal, 20)
         .frame(maxWidth: .infinity)
-        .background(.ultraThickMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 20))
         .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
     }
     

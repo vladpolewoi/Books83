@@ -12,6 +12,7 @@ struct BookListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var books: [Book]
     @State private var showingAddBook = false
+    @ObservedObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         NavigationView {
@@ -36,6 +37,7 @@ struct BookListView: View {
                 }
             }
             .navigationTitle("My Books")
+            .background(Color.appBackground)
             .sheet(isPresented: $showingAddBook) {
                 AddBookView()
             }

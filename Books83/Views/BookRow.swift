@@ -26,10 +26,10 @@ struct BookRow: View {
                     .aspectRatio(contentMode: .fit)
             } placeholder: {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
+                    .fill(Color.cardBackground)
                     .overlay(
                         Image(systemName: "book")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondaryText)
                             .font(.title2)
                     )
             }
@@ -40,17 +40,18 @@ struct BookRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(book.title)
                     .font(.headline)
+                    .foregroundColor(.primaryText)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 
                 Text("by \(book.author)")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.secondaryText)
                     .lineLimit(1)
                 
                 Text("\(book.totalPages) pages")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.secondaryText)
             }
             
             Spacer()
@@ -62,7 +63,7 @@ struct BookRow: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.title2)
-                        .foregroundColor(.blue)
+                        .foregroundColor(.accent)
                 }
                 .buttonStyle(.plain)
             }
@@ -79,4 +80,5 @@ struct BookRow: View {
 #Preview {
     BookRow(book: Book.sampleBook)
         .padding()
+        .background(Color.appBackground)
 }

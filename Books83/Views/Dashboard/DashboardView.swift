@@ -6,6 +6,7 @@ struct DashboardView: View {
     @Query private var readingLogs: [ReadingLog]
     @State private var showingQuickLog = false
     @State private var selectedBookForLog: Book?
+    @ObservedObject private var themeManager = ThemeManager.shared
     
     private let dailyGoal = 100 // Hardcoded goal
     
@@ -21,9 +22,9 @@ struct DashboardView: View {
                     
                     // Stats Grid
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                        StatCard(title: "This Week", value: "\(pagesThisWeek)", subtitle: "pages", color: .blue)
-                        StatCard(title: "This Year", value: "\(booksThisYear)", subtitle: "books", color: .green)
-                        StatCard(title: "Streak", value: "\(currentStreak)", subtitle: "days", color: .orange)
+                        StatCard(title: "This Week", value: "\(pagesThisWeek)", subtitle: "pages", color: .accent)
+                        StatCard(title: "This Year", value: "\(booksThisYear)", subtitle: "books", color: .success)
+                        StatCard(title: "Streak", value: "\(currentStreak)", subtitle: "days", color: .warning)
                     }
                     
                     // Recently Read Books Section
@@ -31,6 +32,7 @@ struct DashboardView: View {
                         Text("Recently Read")
                             .font(.title2)
                             .fontWeight(.semibold)
+                            .foregroundColor(.primaryText)
                         
                         if recentBooks.isEmpty {
                             ContentUnavailableView(
@@ -55,6 +57,7 @@ struct DashboardView: View {
             }
             .navigationTitle("Today")
             .navigationSubtitle(formattedDate)
+            .background(Color.appBackground)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {

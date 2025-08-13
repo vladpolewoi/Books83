@@ -11,11 +11,12 @@ struct BookStatusBadge: View {
     let status: BookStatus
     
     private var badgeColor: Color {
+        let colors = Color.readingStatusColors
         switch status {
-        case .reading: return .blue
-        case .completed: return .green
-        case .toRead: return .gray
-        case .paused: return .orange
+        case .reading: return colors.reading
+        case .completed: return colors.completed
+        case .toRead: return colors.notStarted
+        case .paused: return colors.paused
         }
     }
     
@@ -48,4 +49,5 @@ struct BookStatusBadge: View {
         BookStatusBadge(status: .paused)
     }
     .padding()
+    .background(Color.appBackground)
 }

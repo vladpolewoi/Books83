@@ -26,7 +26,7 @@ struct BookSearchResultRow: View {
                         .overlay(
                             Image(systemName: "book.closed")
                                 .font(.title2)
-                                .foregroundStyle(.secondary)
+                                .foregroundColor(.secondaryText)
                         )
                 }
                 .frame(width: 60, height: 80)
@@ -38,25 +38,26 @@ struct BookSearchResultRow: View {
                     Text(book.title)
                         .font(.headline)
                         .fontWeight(.semibold)
+                        .foregroundColor(.primaryText)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                     
                     Text("by \(book.authorsText)")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundColor(.secondaryText)
                         .lineLimit(1)
                     
                     HStack {
                         if book.pageCount > 0 {
                             Label("\(book.pageCount) pages", systemImage: "book.pages")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundColor(.secondaryText)
                         }
                         
                         if let publishedDate = book.publishedDate {
                             Label(String(publishedDate.prefix(4)), systemImage: "calendar")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundColor(.secondaryText)
                         }
                     }
                     
@@ -64,7 +65,7 @@ struct BookSearchResultRow: View {
                     if let categories = book.categories, !categories.isEmpty {
                         Text(categories.prefix(2).joined(separator: " • "))
                             .font(.caption2)
-                            .foregroundStyle(.tertiary)
+                            .foregroundColor(.tertiaryText)
                             .lineLimit(1)
                     }
                 }
@@ -75,18 +76,18 @@ struct BookSearchResultRow: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title2)
-                        .foregroundStyle(.green)
+                        .foregroundColor(.success)
                 } else {
                     Image(systemName: "plus.circle")
                         .font(.title2)
-                        .foregroundStyle(.blue)
+                        .foregroundColor(.accent)
                 }
             }
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? .green.opacity(0.1) : .clear)
-                    .stroke(isSelected ? .green : .clear, lineWidth: 1)
+                    .fill(isSelected ? Color.success.opacity(0.1) : Color.cardBackground)
+                    .stroke(isSelected ? Color.success : Color.separator, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
