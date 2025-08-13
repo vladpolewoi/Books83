@@ -110,7 +110,7 @@ struct DashboardView: View {
         var checkDate = calendar.startOfDay(for: Date())
         
         while true {
-            let nextDay = calendar.date(byAdding: .day, value: 1, to: checkDate)!
+            _ = calendar.date(byAdding: .day, value: 1, to: checkDate)!
             let hasReadingOnDate = readingLogs.contains { log in
                 calendar.isDate(log.logDate, inSameDayAs: checkDate)
             }
